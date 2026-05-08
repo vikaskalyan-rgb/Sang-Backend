@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: aavin-delivery-api
+    runtime: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/aavin-delivery-1.0.0.jar
+    envVars:
+      - key: DATABASE_URL
+        value: jdbc:postgresql://ep-summer-haze-aqzyft8x-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require
+      - key: DB_USERNAME
+        value: neondb_owner
+      - key: DB_PASSWORD
+        value: npg_KoYwn2JcgUT1
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://sangiya-aavin.vercel.app,http://localhost:5173
+      - key: PORT
+        value: "8080"
