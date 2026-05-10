@@ -6,6 +6,7 @@ import com.aavin.delivery.entity.Customer;
 import com.aavin.delivery.entity.DailyDelivery;
 import com.aavin.delivery.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class DashboardService {
         this.txRepo = txRepo; this.stockService = stockService;
     }
 
+    @Transactional(readOnly = true)
     public DashboardDTO getSummary(LocalDate from, LocalDate to) {
         LocalDate today      = LocalDate.now();
         LocalDate monthStart = today.withDayOfMonth(1);

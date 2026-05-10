@@ -21,14 +21,19 @@ public class DeliveryService {
 
     public DeliveryService(DailyDeliveryRepository deliveryRepo, CustomerRepository customerRepo,
                            PacketTypeRepository packetTypeRepo, StockService stockService) {
-        this.deliveryRepo = deliveryRepo; this.customerRepo = customerRepo;
-        this.packetTypeRepo = packetTypeRepo; this.stockService = stockService;
+        this.deliveryRepo = deliveryRepo;
+        this.customerRepo = customerRepo;
+        this.packetTypeRepo = packetTypeRepo;
+        this.stockService = stockService;
     }
 
+    @Transactional(readOnly = true)
     public List<DailyDeliveryDTO> getToday() {
         LocalDate today = LocalDate.now();
         return customerRepo.findByIsActiveTrueOrderByDeliveryOrderAsc().stream()
-                .map(c -> buildDto(c, deliveryRepo.findByCustomerIdAndDeliveryDate(c.getId(), today).orElse(null), today))
+                .map(c -> buildDto(c,
+                        deliveryRepo.findByCustomerIdAndDeliveryDate(c.getId(), today).orElse(null),
+                        today))
                 .toList();
     }
 
@@ -40,11 +45,18 @@ public class DeliveryService {
                 ? packetTypeRepo.findById(req.getPacketTypeId()).orElse(c.getDefaultPacketType())
                 : c.getDefaultPacketType();
         DailyDelivery del = deliveryRepo.findByCustomerIdAndDeliveryDate(c.getId(), req.getDate())
-                .orElseGet(() -> { DailyDelivery d = new DailyDelivery(); d.setCustomer(c); d.setDeliveryDate(req.getDate()); return d; });
+                .orElseGet(() -> {
+                    DailyDelivery d = new DailyDelivery();
+                    d.setCustomer(c);
+                    d.setDeliveryDate(req.getDate());
+                    return d;
+                });
         boolean wasDelivered = Boolean.TRUE.equals(del.getIsDelivered());
         int oldPackets = del.getPacketsDelivered() != null ? del.getPacketsDelivered() : 0;
-        del.setIsDelivered(true); del.setPacketsDelivered(req.getPackets());
-        del.setPacketType(pt); del.setSubstituteName(req.getSubstituteName());
+        del.setIsDelivered(true);
+        del.setPacketsDelivered(req.getPackets());
+        del.setPacketType(pt);
+        del.setSubstituteName(req.getSubstituteName());
         del.setDeliveredAt(LocalDateTime.now());
         DailyDelivery saved = deliveryRepo.save(del);
         if (pt != null) {
@@ -56,16 +68,19 @@ public class DeliveryService {
 
     @Transactional
     public DailyDeliveryDTO unmark(Long customerId, LocalDate date) {
-        Customer c = customerRepo.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
+        Customer c = customerRepo.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
         DailyDelivery del = deliveryRepo.findByCustomerIdAndDeliveryDate(customerId, date)
                 .orElseThrow(() -> new ResourceNotFoundException("Delivery not found"));
-        del.setIsDelivered(false); del.setDeliveredAt(null);
+        del.setIsDelivered(false);
+        del.setDeliveredAt(null);
         return buildDto(c, deliveryRepo.save(del), date);
     }
 
     @Transactional
     public DailyDeliveryDTO updatePackets(Long customerId, LocalDate date, Integer packets) {
-        Customer c = customerRepo.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
+        Customer c = customerRepo.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
         DailyDelivery del = deliveryRepo.findByCustomerIdAndDeliveryDate(customerId, date)
                 .orElseThrow(() -> new ResourceNotFoundException("Delivery not found"));
         del.setPacketsDelivered(packets);
@@ -76,40 +91,66 @@ public class DeliveryService {
     public List<DailyDeliveryDTO> bulkMarkAll(LocalDate date, String substituteName) {
         for (Customer c : customerRepo.findByIsActiveTrueOrderByDeliveryOrderAsc()) {
             DailyDelivery del = deliveryRepo.findByCustomerIdAndDeliveryDate(c.getId(), date)
-                    .orElseGet(() -> { DailyDelivery d = new DailyDelivery(); d.setCustomer(c); d.setDeliveryDate(date); return d; });
+                    .orElseGet(() -> {
+                        DailyDelivery d = new DailyDelivery();
+                        d.setCustomer(c);
+                        d.setDeliveryDate(date);
+                        return d;
+                    });
             if (!Boolean.TRUE.equals(del.getIsDelivered())) {
-                del.setIsDelivered(true); del.setPacketsDelivered(c.getDefaultPackets());
-                del.setPacketType(c.getDefaultPacketType()); del.setSubstituteName(substituteName);
+                del.setIsDelivered(true);
+                del.setPacketsDelivered(c.getDefaultPackets());
+                del.setPacketType(c.getDefaultPacketType());
+                del.setSubstituteName(substituteName);
                 del.setDeliveredAt(LocalDateTime.now());
                 DailyDelivery saved = deliveryRepo.save(del);
                 if (c.getDefaultPacketType() != null)
-                    stockService.deductForDelivery(c.getDefaultPacketType().getId(), c.getDefaultPackets(), saved.getId());
+                    stockService.deductForDelivery(c.getDefaultPacketType().getId(),
+                            c.getDefaultPackets(), saved.getId());
             }
         }
         return getToday();
     }
 
+    @Transactional(readOnly = true)
     public List<DailyDeliveryDTO> getCustomerMonth(Long customerId, int year, int month) {
-        Customer c = customerRepo.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        Customer c = customerRepo.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         LocalDate from = LocalDate.of(year, month, 1);
         LocalDate to   = from.withDayOfMonth(from.lengthOfMonth());
-        return deliveryRepo.findByCustomerIdAndDeliveryDateBetweenOrderByDeliveryDateAsc(customerId, from, to)
+        return deliveryRepo
+                .findByCustomerIdAndDeliveryDateBetweenOrderByDeliveryDateAsc(customerId, from, to)
                 .stream().map(d -> buildDto(c, d, d.getDeliveryDate())).toList();
     }
 
     private DailyDeliveryDTO buildDto(Customer c, DailyDelivery del, LocalDate date) {
         DailyDeliveryDTO d = new DailyDeliveryDTO();
-        d.setCustomerId(c.getId()); d.setCustomerName(c.getName()); d.setCustomerPhone(c.getPhone());
-        d.setCustomerAddress(c.getAddress()); d.setLatitude(c.getLatitude()); d.setLongitude(c.getLongitude());
-        d.setDeliveryOrder(c.getDeliveryOrder()); d.setDeliveryDate(date);
-        PacketType pt = (del != null && del.getPacketType() != null) ? del.getPacketType() : c.getDefaultPacketType();
-        if (pt != null) { d.setPacketTypeId(pt.getId()); d.setPacketColor(pt.getColor()); d.setColorHex(pt.getColorHex()); }
+        d.setCustomerId(c.getId());
+        d.setCustomerName(c.getName());
+        d.setCustomerPhone(c.getPhone());
+        d.setCustomerAddress(c.getAddress());
+        d.setLatitude(c.getLatitude());
+        d.setLongitude(c.getLongitude());
+        d.setDeliveryOrder(c.getDeliveryOrder());
+        d.setDeliveryDate(date);
+        PacketType pt = (del != null && del.getPacketType() != null)
+                ? del.getPacketType() : c.getDefaultPacketType();
+        if (pt != null) {
+            d.setPacketTypeId(pt.getId());
+            d.setPacketColor(pt.getColor());
+            d.setColorHex(pt.getColorHex());
+        }
         if (del != null) {
-            d.setId(del.getId()); d.setIsDelivered(del.getIsDelivered());
-            d.setPacketsDelivered(del.getPacketsDelivered() != null ? del.getPacketsDelivered() : c.getDefaultPackets());
-            d.setSubstituteName(del.getSubstituteName()); d.setDeliveredAt(del.getDeliveredAt()); d.setNotes(del.getNotes());
+            d.setId(del.getId());
+            d.setIsDelivered(del.getIsDelivered());
+            d.setPacketsDelivered(del.getPacketsDelivered() != null
+                    ? del.getPacketsDelivered() : c.getDefaultPackets());
+            d.setSubstituteName(del.getSubstituteName());
+            d.setDeliveredAt(del.getDeliveredAt());
+            d.setNotes(del.getNotes());
         } else {
-            d.setIsDelivered(false); d.setPacketsDelivered(c.getDefaultPackets());
+            d.setIsDelivered(false);
+            d.setPacketsDelivered(c.getDefaultPackets());
         }
         return d;
     }

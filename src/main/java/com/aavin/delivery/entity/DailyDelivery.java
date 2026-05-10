@@ -8,19 +8,44 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "daily_deliveries",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"customer_id", "delivery_date"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"customer_id", "delivery_date"}))
 public class DailyDelivery {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "customer_id", nullable = false) private Customer customer;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "packet_type_id") private PacketType packetType;
-    @Column(name = "delivery_date", nullable = false) private LocalDate deliveryDate;
-    @Column(name = "is_delivered") private Boolean isDelivered = false;
-    @Column(name = "packets_delivered") private Integer packetsDelivered;
-    @Column(name = "substitute_name") private String substituteName;
-    @Column(name = "delivered_at") private LocalDateTime deliveredAt;
-    @Column(columnDefinition = "TEXT") private String notes;
-    @CreationTimestamp @Column(name = "created_at", updatable = false) private LocalDateTime createdAt;
-    @UpdateTimestamp @Column(name = "updated_at") private LocalDateTime updatedAt;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "packet_type_id")
+    private PacketType packetType;
+
+    @Column(name = "delivery_date", nullable = false)
+    private LocalDate deliveryDate;
+
+    @Column(name = "is_delivered")
+    private Boolean isDelivered = false;
+
+    @Column(name = "packets_delivered")
+    private Integer packetsDelivered;
+
+    @Column(name = "substitute_name")
+    private String substituteName;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public DailyDelivery() {}
     public Long getId() { return id; }

@@ -12,11 +12,11 @@ public class StockTransaction {
     public enum TransactionType { PURCHASE, DELIVERY_DEDUCT, MANUAL_ADJUST_IN, MANUAL_ADJUST_OUT, RETURN }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "packet_type_id", nullable = false) private PacketType packetType;
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "packet_type_id", nullable = false) private PacketType packetType;
     @Enumerated(EnumType.STRING) @Column(name = "transaction_type", nullable = false) private TransactionType transactionType;
     @Column(nullable = false) private Integer quantity;
     @Column(name = "unit_cost", precision = 10, scale = 2) private BigDecimal unitCost;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "supplier_id") private Supplier supplier;
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "supplier_id") private Supplier supplier;
     @Column(name = "reference_id") private Long referenceId;
     @Column(columnDefinition = "TEXT") private String notes;
     @Column(name = "transaction_date", nullable = false) private LocalDate transactionDate;

@@ -9,24 +9,56 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "customers")
 public class Customer {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @Column(nullable = false) private String name;
-    @Column(nullable = false, length = 20) private String phone;
-    @Column(columnDefinition = "TEXT") private String address;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, length = 20)
+    private String phone;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    // Double fields must NOT have precision/scale - that's only for BigDecimal
     @Column(name = "latitude")
     private Double latitude;
+
     @Column(name = "longitude")
     private Double longitude;
-    @Column(name = "delivery_order", nullable = false) private Integer deliveryOrder;
-    @Column(name = "default_packets") private Integer defaultPackets = 2;
+
+    @Column(name = "delivery_order", nullable = false)
+    private Integer deliveryOrder;
+
+    @Column(name = "default_packets")
+    private Integer defaultPackets = 2;
+
     private LocalDate birthday;
-    @Column(columnDefinition = "TEXT") private String notes;
-    @Column(name = "is_active") private Boolean isActive = true;
-    @Column(name = "packet_config_type", length = 20) private String packetConfigType = "DAILY";
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "default_packet_type_id") private PacketType defaultPacketType;
-    @Column(name = "packet_count") private Integer packetCount = 2;
-    @CreationTimestamp @Column(name = "created_at", updatable = false) private LocalDateTime createdAt;
-    @UpdateTimestamp @Column(name = "updated_at") private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @Column(name = "packet_config_type", length = 20)
+    private String packetConfigType = "DAILY";
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "default_packet_type_id")
+    private PacketType defaultPacketType;
+
+    @Column(name = "packet_count")
+    private Integer packetCount = 2;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     public Customer() {}
     public Long getId() { return id; }

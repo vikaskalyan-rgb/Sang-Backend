@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Table(name = "stock")
 public class Stock {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "packet_type_id", nullable = false, unique = true) private PacketType packetType;
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "packet_type_id", nullable = false, unique = true) private PacketType packetType;
     @Column(nullable = false) private Integer quantity = 0;
     @UpdateTimestamp @Column(name = "updated_at") private LocalDateTime updatedAt;
 
